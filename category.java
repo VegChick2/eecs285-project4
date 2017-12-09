@@ -10,6 +10,7 @@ public class category {
     public Vector<String> transactions;
     public category(Double inbudget)
     {
+        transactions=new Vector<String>();
         budget=inbudget;
         balance=inbudget;
     }

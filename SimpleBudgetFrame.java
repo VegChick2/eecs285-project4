@@ -34,7 +34,7 @@ public class SimpleBudgetFrame extends JFrame {
         theClient = new ClientServerSocket("127.0.0.1", 45000);
         theClient.startClient();
         theClient.sendString("r"+"%"+filename+"#"); //read
-        assert (theClient.recvString().equals("%read#"));
+        if (!theClient.recvString().equals("%read#")) exit(0);
         theClient.sendString("l");
         String list=theClient.recvString();
         Vector<String> catlist=getargs(list);
@@ -47,9 +47,9 @@ public class SimpleBudgetFrame extends JFrame {
 
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu("File");
-        saveItem = new JMenuItem("Open Image");
+        saveItem = new JMenuItem("Save Budget");
         saveItem.addActionListener(new myActionListener());
-        exitItem = new JMenuItem("Quit Program");
+        exitItem = new JMenuItem("Exit Program");
         exitItem.addActionListener(new myActionListener());
         fileMenu.add(saveItem);
         fileMenu.add(exitItem);
@@ -66,6 +66,7 @@ public class SimpleBudgetFrame extends JFrame {
         p1.add(new JLabel("Category:"));
         catCombo = new JComboBox(calistarray);
         catCombo.addActionListener(new myActionListener());
+        catCombo.setSelectedItem(null);
         p1.add(catCombo);
 
         JPanel p2 = new JPanel();
@@ -105,7 +106,7 @@ public class SimpleBudgetFrame extends JFrame {
 
 
 
-        pack();
+        setSize(400,200);
         setVisible(true);
     }
 
@@ -117,19 +118,21 @@ public class SimpleBudgetFrame extends JFrame {
             if(source==saveItem)
             {
                 theClient.sendString("s");
-                assert(theClient.recvString().equals("%save#"));
+                if(theClient.recvString().equals("%save#"));
 
             }else if (source==exitItem)
             {
                 theClient.sendString("e");
-                assert(theClient.recvString().equals("%exit#"));
+                if(theClient.recvString().equals("%exit#"))
                 exit(0);
 
             }
             else if(source==catCombo)
             {
-                theClient.sendString("g%"+(String)catCombo.getSelectedItem()+"#");
-                balance.setText("Balance:$"+getargs(theClient.recvString()).lastElement());
+                if(catCombo.getSelectedItem()!=null) {
+                    theClient.sendString("g%" + (String) catCombo.getSelectedItem() + "#");
+                    balance.setText("Balance:$" + getargs(theClient.recvString()).lastElement());
+                }
 
             }else if(source==addtranscation)
             {
@@ -138,6 +141,8 @@ public class SimpleBudgetFrame extends JFrame {
                         +"%"+merchant.getText()+"#"
                         +"%"+amount.getText()+"#");
                 balance.setText("Balance:$"+getargs(theClient.recvString()).lastElement());
+                merchant.setText("");
+                amount.setText("");
 
             }
 
@@ -156,16 +161,18 @@ public class SimpleBudgetFrame extends JFrame {
 
         while (i<in.length()) {
             if (in.charAt(i) == '%') {
-                args.add("");
-                now=args.lastElement();
+                now="";
+               // now=args.lastElement();
 
                 i++;
             } else if (in.charAt(i) == '#') {
                 i++;
+                args.add(new String(now));
             } else {
-                i++;
 
-                now+= now + in.charAt(i);
+
+                now= now + in.charAt(i);
+                i++;
             }
         }//grt arguments
 

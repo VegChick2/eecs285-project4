@@ -1,9 +1,8 @@
 package eecs285.proj4.qiaotian;
 
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +41,9 @@ public class server {
                 }
 
             } else if (instruction.charAt(0) == 'g') {//get balance
+
                 String args[] = new String[1];
+                args[0]="";
                 getargs(args);
 
                 category target = budgets.get(args[0]);
@@ -53,8 +54,9 @@ public class server {
             } else if (instruction.charAt(0) == 't') {//transaction
 
                 String args[] = new String[3];//0:category 1:merchant 2:amount
-
-
+                args[0]="";
+                args[1]="";
+                args[2]="";
                 getargs(args);
 
                 category target = budgets.get(args[0]);
@@ -64,7 +66,7 @@ public class server {
 
                 target.balance -= amount;
                 target.transactions.add(args[0] + ':' + merchant + ':' + df.format(amount));
-                response = '%' + df.format(target.budget) + '#';
+                response = '%' + df.format(target.balance) + '#';
 
 
             } else if (instruction.charAt(0) == 's') {//save
@@ -77,8 +79,9 @@ public class server {
                 exit(0);
             } else if (instruction.charAt(0) == 'r') {//readfile
                 String args[] = new String[1];
+                args[0]="";
                 getargs(args);
-                filename = args[1];
+                filename = args[0];
                 readfile();
                 response = "%read#";
             } else {
@@ -93,13 +96,15 @@ public class server {
 
     void readfile() {
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(filename));
+            URL path = server.class.getResource(filename);
+            File f = new File(path.getFile());
+
+            BufferedReader reader = new BufferedReader(new FileReader(f));
 
             String line;
             int catsize=-1;
             int j=0;
             while ((line = reader.readLine()) != null) {
-
 
 
                 if(catsize==-1)//first line
@@ -149,6 +154,7 @@ public class server {
                     {
                         mer+=line.charAt(i);
                     }
+                    i++;
                     for(;i<line.length();i++)
                     {
                         amount+=line.charAt(i);
@@ -180,20 +186,28 @@ public class server {
 
     void save() {
         try {
-            FileWriter writer = new FileWriter(filename);
-            writer.write(budgets.size());//number
+            URL path = server.class.getResource(filename);
+            File f = new File(path.getFile());
+            BufferedWriter writer = new BufferedWriter(new FileWriter(f));
+           // FileWriter writer = new FileWriter(f);
+            writer.write(budgets.size()+"");//number
+            writer.newLine();
             for (Map.Entry<String, category> entry : budgets.entrySet()) {//category
 
 
-                writer.write(entry.getKey()+':'+entry.getValue().budget);
+                writer.write(entry.getKey()+':'+df.format(entry.getValue()
+                        .budget));
+                writer.newLine();
 
 
             }
             for (Map.Entry<String, category> entry : budgets.entrySet()) {//transactions
 
 
-                for(int k=0;k<entry.getValue().transactions.size();k++)
-                writer.write(entry.getValue().transactions.elementAt(k));
+                for(int k=0;k<entry.getValue().transactions.size();k++) {
+                    writer.write(entry.getValue().transactions.elementAt(k));
+                    writer.newLine();
+                }
 
 
             }
@@ -224,8 +238,9 @@ public class server {
                 i++;
                 argindex++;
             } else {
-                i++;
+
                 args[argindex] = args[argindex] + instruction.charAt(i);
+                i++;
             }
         }//grt arguments
 
